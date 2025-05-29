@@ -1,9 +1,9 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\willi\\source\\repos\\Securefile-pro2.0\\",
+  "WorkspaceRootPath": "C:\\Users\\shana\\Documents\\GitHub\\Securefile-pro2.0\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{44B6A8F9-EDF8-4D42-83D5-0B0F5CA26539}|Securefile-pro2.0\\Securefile-pro2.0.vcxproj|C:\\Users\\willi\\source\\repos\\Securefile-pro2.0\\Securefile-pro2.0\\Securefile-pro2.0.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "AbsoluteMoniker": "D:0:0:{44B6A8F9-EDF8-4D42-83D5-0B0F5CA26539}|Securefile-pro2.0\\Securefile-pro2.0.vcxproj|C:\\Users\\shana\\Documents\\GitHub\\Securefile-pro2.0\\Securefile-pro2.0\\Securefile-pro2.0.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{44B6A8F9-EDF8-4D42-83D5-0B0F5CA26539}|Securefile-pro2.0\\Securefile-pro2.0.vcxproj|solutionrelative:Securefile-pro2.0\\Securefile-pro2.0.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
@@ -17,37 +17,36 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 2,
           "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
             {
               "$type": "Document",
               "DocumentIndex": 1,
               "Title": "applink.c",
               "DocumentMoniker": "C:\\Users\\willi\\source\\repos\\vcpkg\\installed\\x64-windows\\include\\openssl\\applink.c",
-              "RelativeDocumentMoniker": "..\\vcpkg\\installed\\x64-windows\\include\\openssl\\applink.c",
+              "RelativeDocumentMoniker": "..\\..\\..\\..\\willi\\source\\repos\\vcpkg\\installed\\x64-windows\\include\\openssl\\applink.c",
               "ToolTip": "C:\\Users\\willi\\source\\repos\\vcpkg\\installed\\x64-windows\\include\\openssl\\applink.c",
-              "RelativeToolTip": "..\\vcpkg\\installed\\x64-windows\\include\\openssl\\applink.c",
+              "RelativeToolTip": "..\\..\\..\\..\\willi\\source\\repos\\vcpkg\\installed\\x64-windows\\include\\openssl\\applink.c",
               "ViewState": "AQIAAAAAAAAAAAAAAAAAABMAAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
-              "WhenOpened": "2025-05-28T13:27:15.586Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-05-28T13:27:15.586Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "Securefile-pro2.0.cpp",
-              "DocumentMoniker": "C:\\Users\\willi\\source\\repos\\Securefile-pro2.0\\Securefile-pro2.0\\Securefile-pro2.0.cpp",
+              "DocumentMoniker": "C:\\Users\\shana\\Documents\\GitHub\\Securefile-pro2.0\\Securefile-pro2.0\\Securefile-pro2.0.cpp",
               "RelativeDocumentMoniker": "Securefile-pro2.0\\Securefile-pro2.0.cpp",
-              "ToolTip": "C:\\Users\\willi\\source\\repos\\Securefile-pro2.0\\Securefile-pro2.0\\Securefile-pro2.0.cpp",
+              "ToolTip": "C:\\Users\\shana\\Documents\\GitHub\\Securefile-pro2.0\\Securefile-pro2.0\\Securefile-pro2.0.cpp",
               "RelativeToolTip": "Securefile-pro2.0\\Securefile-pro2.0.cpp",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAABAAAAA4AAAA",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAIAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2025-05-28T12:48:16.508Z",
               "EditorCaption": ""
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
             }
           ]
         }
