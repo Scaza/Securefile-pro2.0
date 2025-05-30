@@ -3,104 +3,87 @@
 #include <openssl/rand.h>
 #include <fstream>
 #include <iostream>
-#include <cstring>
 
-#define AES_BLOCK_SIZE 16
-#define AES_KEY_SIZE 32 // 256-bit key
+FileEncryptor::FileEncryptor() {
+    iv.resize(16);
+    RAND_bytes(iv.data(), iv.size());
+}
 
-FileEncryptor::FileEncryptor(const std::string& inputFile, const std::string& outputFile)
-    : inputFilePath(inputFile), outputFilePath(outputFile) {}
+void FileEncryptor::setFilePaths(const std::string& input, const std::string& output) {
+    inputFilePath = input;
+    outputFilePath = output;
+}
 
 void FileEncryptor::setKey(const std::vector<unsigned char>& key) {
-    if (key.size() != AES_KEY_SIZE) {
-        throw std::runtime_error("AES key must be 256 bits (32 bytes) long.");
-    }
     aesKey = key;
 }
 
-void FileEncryptor::encryptFile() {
-    std::ifstream inFile(inputFilePath, std::ios::binary);
-    std::ofstream outFile(outputFilePath, std::ios::binary);
+bool FileEncryptor::encryptFile() {
+    std::ifstream input(inputFilePath, std::ios::binary);
+    std::ofstream output(outputFilePath, std::ios::binary);
 
-    if (!inFile || !outFile) {
-        throw std::runtime_error("Failed to open input or output file.");
+    if (!input || !output) {
+        std::cerr << "File error: Check paths." << std::endl;
+        return false;
     }
 
-    unsigned char iv[AES_BLOCK_SIZE];
-    if (!RAND_bytes(iv, AES_BLOCK_SIZE)) {
-        throw std::runtime_error("Failed to generate IV.");
-    }
-
-    outFile.write(reinterpret_cast<char*>(iv), AES_BLOCK_SIZE);
+    output.write(reinterpret_cast<char*>(iv.data()), iv.size());
 
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-    EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, aesKey.data(), iv);
+    EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, aesKey.data(), iv.data());
 
-    const size_t bufferSize = 4096;
-    unsigned char inBuffer[bufferSize];
-    unsigned char outBuffer[bufferSize + AES_BLOCK_SIZE];
+    std::vector<unsigned char> buffer(4096);
+    std::vector<unsigned char> outBuffer(4096 + EVP_MAX_BLOCK_LENGTH);
     int outLen;
 
-    while (!inFile.eof()) {
-        inFile.read(reinterpret_cast<char*>(inBuffer), bufferSize);
-        std::streamsize bytesRead = inFile.gcount();
+    while (input.good()) {
+        input.read(reinterpret_cast<char*>(buffer.data()), buffer.size());
+        std::streamsize bytesRead = input.gcount();
 
-        if (!EVP_EncryptUpdate(ctx, outBuffer, &outLen, inBuffer, bytesRead)) {
-            EVP_CIPHER_CTX_free(ctx);
-            throw std::runtime_error("Encryption failed.");
-        }
-
-        outFile.write(reinterpret_cast<char*>(outBuffer), outLen);
+        EVP_EncryptUpdate(ctx, outBuffer.data(), &outLen, buffer.data(), static_cast<int>(bytesRead));
+        output.write(reinterpret_cast<char*>(outBuffer.data()), outLen);
     }
 
-    if (!EVP_EncryptFinal_ex(ctx, outBuffer, &outLen)) {
-        EVP_CIPHER_CTX_free(ctx);
-        throw std::runtime_error("Final encryption block failed.");
-    }
+    EVP_EncryptFinal_ex(ctx, outBuffer.data(), &outLen);
+    output.write(reinterpret_cast<char*>(outBuffer.data()), outLen);
 
-    outFile.write(reinterpret_cast<char*>(outBuffer), outLen);
     EVP_CIPHER_CTX_free(ctx);
+    return true;
 }
 
-void FileEncryptor::decryptFile() {
-    std::ifstream inFile(inputFilePath, std::ios::binary);
-    std::ofstream outFile(outputFilePath, std::ios::binary);
+bool FileEncryptor::decryptFile() {
+    std::ifstream input(inputFilePath, std::ios::binary);
+    std::ofstream output(outputFilePath, std::ios::binary);
 
-    if (!inFile || !outFile) {
-        throw std::runtime_error("Failed to open input or output file.");
+    if (!input || !output) {
+        std::cerr << "File error: Check paths." << std::endl;
+        return false;
     }
 
-    unsigned char iv[AES_BLOCK_SIZE];
-    inFile.read(reinterpret_cast<char*>(iv), AES_BLOCK_SIZE);
-    if (inFile.gcount() != AES_BLOCK_SIZE) {
-        throw std::runtime_error("Failed to read IV.");
-    }
+    input.read(reinterpret_cast<char*>(iv.data()), iv.size());
 
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-    EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, aesKey.data(), iv);
+    EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, aesKey.data(), iv.data());
 
-    const size_t bufferSize = 4096;
-    unsigned char inBuffer[bufferSize];
-    unsigned char outBuffer[bufferSize + AES_BLOCK_SIZE];
+    std::vector<unsigned char> buffer(4096);
+    std::vector<unsigned char> outBuffer(4096 + EVP_MAX_BLOCK_LENGTH);
     int outLen;
 
-    while (!inFile.eof()) {
-        inFile.read(reinterpret_cast<char*>(inBuffer), bufferSize);
-        std::streamsize bytesRead = inFile.gcount();
+    while (input.good()) {
+        input.read(reinterpret_cast<char*>(buffer.data()), buffer.size());
+        std::streamsize bytesRead = input.gcount();
 
-        if (!EVP_DecryptUpdate(ctx, outBuffer, &outLen, inBuffer, bytesRead)) {
-            EVP_CIPHER_CTX_free(ctx);
-            throw std::runtime_error("Decryption failed.");
-        }
-
-        outFile.write(reinterpret_cast<char*>(outBuffer), outLen);
+        EVP_DecryptUpdate(ctx, outBuffer.data(), &outLen, buffer.data(), static_cast<int>(bytesRead));
+        output.write(reinterpret_cast<char*>(outBuffer.data()), outLen);
     }
 
-    if (!EVP_DecryptFinal_ex(ctx, outBuffer, &outLen)) {
+    if (!EVP_DecryptFinal_ex(ctx, outBuffer.data(), &outLen)) {
+        std::cerr << "Decryption failed: Possibly incorrect key or corrupted data." << std::endl;
         EVP_CIPHER_CTX_free(ctx);
-        throw std::runtime_error("Final decryption block failed. Possible key/IV mismatch or corrupted file.");
+        return false;
     }
+    output.write(reinterpret_cast<char*>(outBuffer.data()), outLen);
 
-    outFile.write(reinterpret_cast<char*>(outBuffer), outLen);
     EVP_CIPHER_CTX_free(ctx);
+    return true;
 }
