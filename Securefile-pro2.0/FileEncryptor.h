@@ -1,6 +1,7 @@
 #ifndef FILE_ENCRYPTOR_H
 #define FILE_ENCRYPTOR_H
 
+#include <iostream>
 #include <string>
 #include <vector>
 

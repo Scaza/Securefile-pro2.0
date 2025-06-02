@@ -10,7 +10,7 @@ int main() {
     // File paths
     std::string inputFile = "sample.txt";
     std::string encryptedFile = "sample.enc";
-    std::string decryptedFile = "sample.dec.txt";
+    std::string decryptedFile = "sampledec.txt";
 
     // RSA Key paths
     std::string pubKeyPath = "public.pem";
