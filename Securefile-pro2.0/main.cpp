@@ -1,67 +1,54 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <openssl/rand.h>
+
 #include "FileEncryptor.h"
 #include "RSAKeyManager.h"
-#include <iostream>
-#include <fstream>
-#include <random>
-#include <openssl\applink.c>
-
-// Helper: Generate 256-bit AES key
-std::vector<unsigned char> generateAESKey() {
-    std::vector<unsigned char> key(32); // 256 bits
-    std::random_device rd;
-    std::generate(key.begin(), key.end(), [&rd]() { return rd(); });
-    return key;
-}
 
 int main() {
-    
-    const std::string pubKeyPath = "public.pem";
-    const std::string privKeyPath = "private.pem";
-    const std::string inputFilePath = "input.txt";
-    const std::string encryptedFilePath = "encrypted.bin";
-    const std::string decryptedFilePath = "decrypted.txt";
-    const std::string encryptedKeyFile = "encrypted_key.bin";
+    // File paths
+    std::string inputFile = "sample.txt";
+    std::string encryptedFile = "sample.enc";
+    std::string decryptedFile = "sampledec.txt";
 
-    try {
-        // Step 1: Setup RSA key manager
-        RSAKeyManager keyManager(pubKeyPath, privKeyPath);
-        keyManager.generateKeys();
-        keyManager.saveKeys();
+    // RSA Key paths
+    std::string pubKeyPath = "public.pem";
+    std::string privKeyPath = "private.pem";
 
-        // Step 2: Generate AES key
-        auto aesKey = generateAESKey();
+    // Step 1: RSA Key Setup
+    RSAKeyManager keyManager;
+    keyManager.setKeyPaths(pubKeyPath, privKeyPath);
 
-        // Step 3: Encrypt AES key using RSA and save it
-        auto encryptedAESKey = keyManager.encryptAESKey(aesKey);
-        std::ofstream keyOut(encryptedKeyFile, std::ios::binary);
-        keyOut.write(reinterpret_cast<const char*>(encryptedAESKey.data()), encryptedAESKey.size());
-        keyOut.close();
+    // Generate keys only if not already present
+    keyManager.generateKeys(); // This will overwrite existing keys
 
-        // Step 4: Encrypt file using AES key
-        FileEncryptor encryptor(inputFilePath, encryptedFilePath);
-        encryptor.setKey(aesKey);
-        encryptor.encryptFile();
+    keyManager.loadKeys();
 
-        // Step 5: Decrypt AES key using RSA
-        std::ifstream keyIn(encryptedKeyFile, std::ios::binary);
-        std::vector<unsigned char> encryptedKeyData((std::istreambuf_iterator<char>(keyIn)),
-            std::istreambuf_iterator<char>());
-        keyIn.close();
-
-        auto decryptedAESKey = keyManager.decryptAESKey(encryptedKeyData);
-
-        // Step 6: Decrypt file using decrypted AES key
-        FileEncryptor decryptor(encryptedFilePath, decryptedFilePath);
-        decryptor.setKey(decryptedAESKey);
-        decryptor.decryptFile();
-
-        std::cout << "Encryption and decryption successful.\n";
-
-    }
-    catch (const std::exception& ex) {
-        std::cerr << "Error: " << ex.what() << "\n";
+    // Step 2: AES Key Generation
+    std::vector<unsigned char> aesKey(32); // 256-bit key
+    if (!RAND_bytes(aesKey.data(), aesKey.size())) {
+        std::cerr << "Failed to generate AES key." << std::endl;
         return 1;
     }
+
+    // Step 3: Encrypt AES Key with RSA Public Key
+    std::vector<unsigned char> encryptedAESKey = keyManager.encryptAESKey(aesKey);
+
+    // Step 4: Decrypt AES Key with RSA Private Key
+    std::vector<unsigned char> decryptedAESKey = keyManager.decryptAESKey(encryptedAESKey);
+
+    // Step 5: File Encryption
+    FileEncryptor encryptor;
+    encryptor.setKey(decryptedAESKey);
+    encryptor.setFilePaths(inputFile, encryptedFile);
+    encryptor.encryptFile();
+
+    // Step 6: File Decryption
+    encryptor.setFilePaths(encryptedFile, decryptedFile);
+    encryptor.decryptFile();
+
+    std::cout << "Encryption and decryption completed successfully." << std::endl;
 
     return 0;
 }

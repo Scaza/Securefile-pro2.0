@@ -1,8 +1,7 @@
-#pragma 
+#ifndef FILE_ENCRYPTOR_H
+#define FILE_ENCRYPTOR_H
 
-#ifndef FILEENCRYPTOR_H
-#define FILEENCRYPTOR_H
-
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -10,20 +9,17 @@ class FileEncryptor {
 private:
     std::string inputFilePath;
     std::string outputFilePath;
-    std::vector<unsigned char> aesKey;
+    std::vector<unsigned char> aesKey; // 256-bit AES key
+    std::vector<unsigned char> iv;     // Initialization Vector (16 bytes)
 
 public:
-    // Constructor
-    FileEncryptor(const std::string& inputFile, const std::string& outputFile);
+    FileEncryptor();
 
-    // Set AES key (256-bit)
+    void setFilePaths(const std::string& input, const std::string& output);
     void setKey(const std::vector<unsigned char>& key);
 
-    // Encrypt the file at inputFilePath and write to outputFilePath
-    void encryptFile();
-
-    // Decrypt the file at inputFilePath and write to outputFilePath
-    void decryptFile();
+    bool encryptFile();
+    bool decryptFile();
 };
 
-#endif // FILEENCRYPTOR_H
+#endif

@@ -1,29 +1,29 @@
+#ifndef RSAKEYMANAGER_H
+#define RSAKEYMANAGER_H
 
-#ifndef RSA_KEY_MANAGER_H
-#define RSA_KEY_MANAGER_H
-
-#include <openssl/rsa.h>
-#include <openssl/pem.h>
-#include <openssl/err.h>
-#include <vector>
 #include <string>
-#include <memory>
+#include <vector>
+#include <openssl/rsa.h>
 
 class RSAKeyManager {
 private:
     std::string publicKeyPath;
     std::string privateKeyPath;
-    RSA* rsa = nullptr;
+
+    RSA* publicKey = nullptr;
+    RSA* privateKey = nullptr;
 
 public:
-    RSAKeyManager(const std::string& pubPath, const std::string& privPath);
-    ~RSAKeyManager();
+    void setKeyPaths(const std::string& pub, const std::string& pri);
 
-    void generateKeys(int bits = 2048);
-    void saveKeys();
+    void generateKeys();
+    void saveKeys(); // Not implemented above, optional to add if needed
     void loadKeys();
+
     std::vector<unsigned char> encryptAESKey(const std::vector<unsigned char>& aesKey);
     std::vector<unsigned char> decryptAESKey(const std::vector<unsigned char>& encryptedKey);
+
+    ~RSAKeyManager(); // Clean up allocated RSA structures
 };
 
-#endif
+#endif // RSAKEYMANAGER_H
