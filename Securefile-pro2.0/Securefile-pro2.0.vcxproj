@@ -131,8 +131,10 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="RSAKeyManager.cpp" />
     <ClCompile Include="FileEncryptor.cpp" />
+    <ClCompile Include="CLIHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CLIHandler.h" />
     <ClInclude Include="FileEncryptor.h" />
     <ClInclude Include="RSAKeyManager.h" />
   </ItemGroup>
