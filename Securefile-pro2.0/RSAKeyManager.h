@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <openssl/rsa.h>
+#include <openssl/pem.h>
 
 class RSAKeyManager {
 private:
@@ -17,8 +18,8 @@ public:
     void setKeyPaths(const std::string& pub, const std::string& pri);
 
     void generateKeys();
-    void saveKeys(); // Not implemented above, optional to add if needed
-    void loadKeys();
+    void saveKeys(const std::string& pubPath, const std::string& privPath);
+    void loadKeys(const std::string& pubPath, const std::string& privPath);
 
     std::vector<unsigned char> encryptAESKey(const std::vector<unsigned char>& aesKey);
     std::vector<unsigned char> decryptAESKey(const std::vector<unsigned char>& encryptedKey);

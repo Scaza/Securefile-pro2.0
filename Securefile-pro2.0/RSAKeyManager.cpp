@@ -23,16 +23,58 @@ void RSAKeyManager::generateKeys() {
     RSA_free(rsa);
 }
 
-void RSAKeyManager::loadKeys() {
-    BIO* pub = BIO_new_file(publicKeyPath.c_str(), "r");
-    publicKey = PEM_read_bio_RSA_PUBKEY(pub, nullptr, nullptr, nullptr);
-    BIO_free(pub);
+void RSAKeyManager::loadKeys(const std::string& pubPath, const std::string& privPath) {
+    publicKeyPath = pubPath;
+    privateKeyPath = privPath;
 
-    BIO* pri = BIO_new_file(privateKeyPath.c_str(), "r");
-    privateKey = PEM_read_bio_RSAPrivateKey(pri, nullptr, nullptr, nullptr);
-    BIO_free(pri);
+    FILE* pubFile = fopen(publicKeyPath.c_str(), "rb");
+    if (!pubFile) {
+        throw std::runtime_error("Failed to open public key file.");
+    }
+    publicKey = PEM_read_RSA_PUBKEY(pubFile, nullptr, nullptr, nullptr);
+    fclose(pubFile);
+    if (!publicKey) {
+        throw std::runtime_error("Failed to read public key.");
+    }
 
-    if (!publicKey || !privateKey) throw std::runtime_error("Failed to load keys");
+    FILE* privFile = fopen(privateKeyPath.c_str(), "rb");
+    if (!privFile) {
+        throw std::runtime_error("Failed to open private key file.");
+    }
+    privateKey = PEM_read_RSAPrivateKey(privFile, nullptr, nullptr, nullptr);
+    fclose(privFile);
+    if (!privateKey) {
+        throw std::runtime_error("Failed to read private key.");
+    }
+}
+
+void RSAKeyManager::saveKeys(const std::string& pubPath, const std::string& privPath) {
+    publicKeyPath = pubPath;
+    privateKeyPath = privPath;
+
+    // Save public key
+    FILE* pubFile = fopen(publicKeyPath.c_str(), "wb");
+    if (!pubFile) {
+        throw std::runtime_error("Failed to open file to save public key.");
+    }
+
+    if (!PEM_write_RSA_PUBKEY(pubFile, publicKey)) {
+        fclose(pubFile);
+        throw std::runtime_error("Failed to write public key.");
+    }
+    fclose(pubFile);
+
+    // Save private key
+    FILE* privFile = fopen(privateKeyPath.c_str(), "wb");
+    if (!privFile) {
+        throw std::runtime_error("Failed to open file to save private key.");
+    }
+
+    if (!PEM_write_RSAPrivateKey(privFile, privateKey, nullptr, nullptr, 0, nullptr, nullptr)) {
+        fclose(privFile);
+        throw std::runtime_error("Failed to write private key.");
+    }
+    fclose(privFile);
 }
 
 std::vector<unsigned char> RSAKeyManager::encryptAESKey(const std::vector<unsigned char>& aesKey) {
