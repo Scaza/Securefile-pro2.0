@@ -5,6 +5,14 @@
 #include <fstream>
 #include <openssl/rand.h>
 
+
+const std::string CLIHandler::COMMAND_ENCRYPT = "encrypt";
+const std::string CLIHandler::COMMAND_DECRYPT = "decrypt";
+const std::string CLIHandler::COMMAND_GENKEYS = "genkeys";
+
+
+
+
 CLIHandler::CLIHandler(int argc, char* argv[]) {
     for (int i = 1; i < argc; ++i) {
         args.emplace_back(argv[i]);
@@ -17,71 +25,61 @@ void CLIHandler::displayHelp() {
         << "  encrypt <inputFile> <outputFile>\n"
         << "  decrypt <inputFile> <outputFile>\n"
         << "  genkeys <publicKeyFile> <privateKeyFile>\n"
-        << "  help\n";
+        << "  help\n"
+        << "  version\n";
+
 }
 
-void CLIHandler::parseArguments() {
+std::string CLIHandler::parseArguments() {
     if (args.empty()) {
         displayHelp();
-        return;
+        return "";
     }
 
     std::string command = args[0];
 
-    if (command == "encrypt" && args.size() == 3) {
-        FileEncryptor encryptor;
-        encryptor.setFilePaths(args[1], args[2]);
-
-        RSAKeyManager rsa;
-        rsa.loadKeys("public.pem", "private.pem");
-
-        // Generate 256-bit AES key (32 bytes)
-        std::vector<unsigned char> aesKey(32);
-        if (!RAND_bytes(aesKey.data(), aesKey.size())) {
-            std::cerr << "Error: Failed to generate AES key.\n";
-            return;
-        }
-
-        encryptor.setKey(aesKey);
-
-        std::vector<unsigned char> encryptedAESKey = rsa.encryptAESKey(aesKey);
-        std::ofstream keyOut("encrypted_aes.key", std::ios::binary);
-        keyOut.write(reinterpret_cast<const char*>(encryptedAESKey.data()), encryptedAESKey.size());
-        keyOut.close();
-
-        encryptor.encryptFile();
-
-        std::cout << "File encrypted successfully.\n";
+    if (command == COMMAND_ENCRYPT && args.size() == 3) {
+        return COMMAND_ENCRYPT;
     }
-    else if (command == "decrypt" && args.size() == 3) {
-        FileEncryptor decryptor;
-        decryptor.setFilePaths(args[1], args[2]);
-
-        RSAKeyManager rsa;
-        rsa.loadKeys("public.pem", "private.pem");
-
-        std::ifstream keyIn("encrypted_aes.key", std::ios::binary);
-        if (!keyIn) {
-            std::cerr << "Error: Could not open encrypted_aes.key.\n";
-            return;
-        }
-
-        std::vector<unsigned char> encryptedAESKey((std::istreambuf_iterator<char>(keyIn)), {});
-        keyIn.close();
-
-        std::vector<unsigned char> aesKey = rsa.decryptAESKey(encryptedAESKey);
-        decryptor.setKey(aesKey);
-        decryptor.decryptFile();
-
-        std::cout << "File decrypted successfully.\n";
+    else if (command == COMMAND_DECRYPT && args.size() == 3) {
+        return COMMAND_DECRYPT;
     }
-    else if (command == "genkeys" && args.size() == 3) {
-        RSAKeyManager rsa;
-        rsa.generateKeys();
-        rsa.saveKeys(args[1], args[2]);
-        std::cout << "RSA keys generated and saved.\n";
+    else if (command == COMMAND_GENKEYS && args.size() == 3) {
+        return COMMAND_GENKEYS;
+    }
+    else if (command == "help") {
+        displayHelp();
+        return "help";
     }
     else {
         displayHelp();
+        return "";
     }
 }
+
+bool CLIHandler::validateFilePath(const std::string& filePath) {
+    std::ifstream file(filePath);
+    return file.good();
+}
+
+void CLIHandler::saveEncryptedAESKey(const std::vector < unsigned char >& encryptedKey, const std::string& filePath) {
+
+    std::ofstream keyOut(filePath, std::ios::binary);
+    if (!keyOut) {
+        throw std::runtime_error("Error: Could not open file to save encrypted AES key.");
+    }
+    keyOut.write(reinterpret_cast<const char*>(encryptedKey.data()), encryptedKey.size());
+    }
+
+    std::vector<unsigned char> CLIHandler::loadEncryptedAESKey(const std::string& filePath) {
+        std::ifstream keyIn(filePath, std::ios::binary);
+        if (!keyIn) {
+            throw std::runtime_error("Error: Could not open file to load encrypted AES key.");
+        }
+        return std::vector<unsigned char>((std::istreambuf_iterator<char>(keyIn)), {});
+    }
+
+const std::vector<std::string>& CLIHandler::getArguments() const {
+    return args;
+}
+
