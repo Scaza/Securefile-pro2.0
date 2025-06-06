@@ -129,6 +129,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PasswordManager.cpp" />
     <ClCompile Include="RSAKeyManager.cpp" />
     <ClCompile Include="FileEncryptor.cpp" />
     <ClCompile Include="CLIHandler.cpp" />
@@ -136,6 +137,7 @@
   <ItemGroup>
     <ClInclude Include="CLIHandler.h" />
     <ClInclude Include="FileEncryptor.h" />
+    <ClInclude Include="PasswordManager.h" />
     <ClInclude Include="RSAKeyManager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

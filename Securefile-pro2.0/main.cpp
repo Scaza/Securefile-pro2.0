@@ -8,23 +8,32 @@
 #include "CLIHandler.h"
 #include "FileEncryptor.h"
 #include "RSAKeyManager.h"
+#include "PasswordManager.h" 
+//#include "HashUtility.h"
+//#include "BenchmarkUtility.h"
 
 int main(int argc, char* argv[]) {
     try {
+
         // Step 1 : Initialize CLIHandler
 		CLIHandler cli(argc, argv);
 
 		//step 2 : Parse command line arguments
 		std::string command = cli.parseArguments();
-		if (command.empty()) {
-			return 1; // Exit if no valid command is provided
+        if (command.empty()) {
+            return 1; // Exit if no valid command is provided
+        }
        
-    }
-
 		// Step 3 : Handle commands
         if (command == CLIHandler :: COMMAND_ENCRYPT) {
            
             //  Encryption
+			if (argc < 4) {
+				std::cerr << "Error: Not enough arguments for encryption.\n";
+				cli.displayHelp();
+				return 1;
+			}
+
 			std::string inputFile = argv[2];
 			std::string outputFile = argv[3];
 
@@ -38,11 +47,11 @@ int main(int argc, char* argv[]) {
 			RSAKeyManager rsa;
 			rsa.loadKeys("public.pem", "private.pem");
 
-			//Generate AES key
-			std::vector<unsigned char> aesKey(32); // 256-bit AES key
-            if (!RAND_bytes(aesKey.data(), static_cast<int>(aesKey.size()))) {
-				throw std::runtime_error("Failed to generate AES key");
-			}
+			//Password based AES Key Derivative
+            PasswordManager passwordManager;
+			std::string password = passwordManager.promptPassword();
+			std::vector<unsigned char> aesKey = passwordManager.deriveKey(password, passwordManager.generateSalt(), 100000, 32); // 32 bytes for AES-256 key
+               
 
 			//Encrypt AES Key
 			std::vector<unsigned char> encryptedAESKey = rsa.encryptAESKey(aesKey);
