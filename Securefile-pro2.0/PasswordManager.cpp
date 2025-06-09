@@ -24,20 +24,15 @@ std::vector<unsigned char> PasswordManager::generateSalt(size_t length) {
 	return salt;
 }
 
+// Derive a cryptographic key from the user's password and randomly generated salt
 std::vector<unsigned char> PasswordManager::deriveKey(const std::string& password, const std::vector<unsigned char>& salt, int iterations, int keyLength) {  
-  std::vector<unsigned char> localSalt = salt; // Create a local copy of the salt  
+	std::vector<unsigned char> derivedKey(keyLength);// Initialize the derived key vector with the specified length
 
-  if (localSalt.empty()) {  
-   localSalt = generateSalt(16); // Generate a random salt if not provided  
-      throw std::invalid_argument("Salt cannot be empty.");  
-  }  
-
-  std::vector<unsigned char> derivedKey(keyLength);  
 
   // Use PBKDF2 to derive the key  
   if (PKCS5_PBKDF2_HMAC(  
       password.c_str(), password.size(),  
-      localSalt.data(), localSalt.size(),  
+      salt.data(), salt.size(),  
       iterations, EVP_sha256(),  
       keyLength, derivedKey.data()) != 1) {  
       throw std::runtime_error("Error: Failed to derive key using PBKDF2.");  
