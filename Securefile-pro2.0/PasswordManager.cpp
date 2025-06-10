@@ -1,5 +1,6 @@
 #include "PasswordManager.h"
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <stdexcept>
 #include <openssl/evp.h>

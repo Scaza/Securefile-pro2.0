@@ -6,8 +6,9 @@
 
 class CLIHandler {
 private:
-	std::vector<std::string> args;
-
+	std::vector<std::string> args; // Command-line arguments
+	const std::string defaultPublicKeyPath = "C:\\Users\\shana\\Documents\\GitHub\\Securefile-pro2.0\\Securefile-pro2.0\\public.pem";
+	const std::string defaultPrivateKeyPath = "C:\\Users\\shana\\Documents\\GitHub\\Securefile-pro2.0\\Securefile-pro2.0\\private.pem";
 public:
 
 	//Constructor
@@ -19,17 +20,19 @@ public:
 	//display help menu
 	void displayHelp();
 
+	//prompt the user for an operation
+	int displayMenuAndPrompt();
+
 	//handle encryption
 	void handleEncryption();
 
 	//handle decryption
 	void handleDecryption();
-
+    
 	//handle RSA key generation
 	void handleKeyGeneration();
 
-	//prompt the user for an operation
-	int promptUserForOperation();
+	
 
 };
 
