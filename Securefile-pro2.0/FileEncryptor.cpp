@@ -6,14 +6,14 @@
 
 FileEncryptor::FileEncryptor() {
     iv.resize(16);
-    RAND_bytes(iv.data(), iv.size());
+    if (!RAND_bytes(iv.data(), iv.size())) {
+        throw std::runtime_error("Error: Failed to generate IV.");
+    }
 }
 
 void FileEncryptor::setFilePaths(const std::string& input, const std::string& output) {
     inputFilePath = input;
     outputFilePath = output;
-    std::cout << "Input path set to: " << inputFilePath << "\n";
-    std::cout << "Output path set to: " << outputFilePath << "\n";
 }
 
 void FileEncryptor::setKey(const std::vector<unsigned char>& key) {
@@ -21,16 +21,20 @@ void FileEncryptor::setKey(const std::vector<unsigned char>& key) {
 }
 
 bool FileEncryptor::encryptFile() {
-    
+    if (aesKey.empty()) {
+        std::cerr << "Error: AES key is not set.\n";
+        return false;
+    }
+
     std::ifstream inputFile(inputFilePath, std::ios::binary);
     std::ofstream outputFile(outputFilePath, std::ios::binary);
 
     if (!inputFile || !outputFile) {
-        std::cerr << "File error: Check paths." << std::endl;
+        std::cerr << "Error: Failed to open input or output file.\n";
         return false;
     }
 
-    outputFile .write(reinterpret_cast<char*>(iv.data()), iv.size());
+    outputFile.write(reinterpret_cast<char*>(iv.data()), iv.size());
 
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
     EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, aesKey.data(), iv.data());
@@ -51,17 +55,20 @@ bool FileEncryptor::encryptFile() {
     outputFile.write(reinterpret_cast<char*>(outBuffer.data()), outLen);
 
     EVP_CIPHER_CTX_free(ctx);
-
     return true;
 }
 
 bool FileEncryptor::decryptFile() {
-    
-    std::ifstream inputFile(inputFilePath, std::ios::in | std::ios::binary);
-    std::ofstream outputFile(outputFilePath, std::ios::out | std::ios::binary);
-   
+    if (aesKey.empty()) {
+        std::cerr << "Error: AES key is not set.\n";
+        return false;
+    }
+
+    std::ifstream inputFile(inputFilePath, std::ios::binary);
+    std::ofstream outputFile(outputFilePath, std::ios::binary);
+
     if (!inputFile || !outputFile) {
-        std::cerr << "File error: Check paths." << std::endl;
+        std::cerr << "Error: Failed to open input or output file.\n";
         return false;
     }
 
@@ -83,7 +90,7 @@ bool FileEncryptor::decryptFile() {
     }
 
     if (!EVP_DecryptFinal_ex(ctx, outBuffer.data(), &outLen)) {
-        std::cerr << "Decryption failed: Possibly incorrect key or corrupted data." << std::endl;
+        std::cerr << "Decryption failed: Possibly incorrect key or corrupted data.\n";
         EVP_CIPHER_CTX_free(ctx);
         return false;
     }
