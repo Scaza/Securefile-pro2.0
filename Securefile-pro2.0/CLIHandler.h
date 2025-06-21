@@ -3,6 +3,11 @@
 
 #include <string>
 #include <vector>
+#include "FileEncryptor.h"
+#include "RSAKeyManager.h"
+#include "PasswordManager.h"
+#include "HashUtility.h"
+#include "BenchmarkUtility.h"
 
 class CLIHandler {
 private:

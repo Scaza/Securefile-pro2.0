@@ -136,6 +136,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BenchmarkUtility.cpp" />
+    <ClCompile Include="HashUtility.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PasswordManager.cpp" />
     <ClCompile Include="RSAKeyManager.cpp" />
@@ -143,8 +145,10 @@
     <ClCompile Include="CLIHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BenchmarkUtility.h" />
     <ClInclude Include="CLIHandler.h" />
     <ClInclude Include="FileEncryptor.h" />
+    <ClInclude Include="HashUtility.h" />
     <ClInclude Include="PasswordManager.h" />
     <ClInclude Include="RSAKeyManager.h" />
   </ItemGroup>

@@ -5,6 +5,9 @@
 #include <string>
 #include <vector>
 
+constexpr size_t ENCRYPTION_HEADER_SIZE = 14; // Length of "ENCRYPTED_FILE"
+const std::string ENCRYPTION_HEADER = "ENCRYPTED_FILE"; // Header to identify encrypted files
+
 class FileEncryptor {
 private:
     std::string inputFilePath;
@@ -20,6 +23,9 @@ public:
 
     bool encryptFile();
     bool decryptFile();
+
+    // New method to check if a file is encrypted
+    bool checkIfEncrypted(const std::string& filePath);
 };
 
-#endif
+#endif // FILE_ENCRYPTOR_H
