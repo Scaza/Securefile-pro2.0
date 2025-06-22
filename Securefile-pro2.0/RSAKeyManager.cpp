@@ -1,89 +1,89 @@
 #include "RSAKeyManager.h"
 #include <openssl/pem.h>
-#include <openssl/err.h>
-#include <stdexcept>
-#include <iostream>
 #include <openssl/rsa.h>
+#include <openssl/err.h>
+#include <fstream>
+#include <iostream>
+#include <vector>
+#include <stdexcept>
 
 RSAKeyManager::RSAKeyManager() {}
 
-RSAKeyManager::~RSAKeyManager() {
-    if (publicKey) RSA_free(publicKey);
-    if (privateKey) RSA_free(privateKey);
-}
+RSAKeyManager::RSAKeyManager(const std::string& pubPath, const std::string& privPath)
+    : publicKeyPath(pubPath), privateKeyPath(privPath) {}
 
 void RSAKeyManager::generateKeys() {
     RSA* rsa = RSA_new();
-    BIGNUM* bn = BN_new();
-    BN_set_word(bn, RSA_F4);
-    RSA_generate_key_ex(rsa, 2048, bn, nullptr);
+    BIGNUM* e = BN_new();
+    BN_set_word(e, RSA_F4);
 
-    // Save public key
-    FILE* pubFile = fopen(publicKeyPath.c_str(), "wb");
-    if (!pubFile) {
-        throw std::runtime_error("Error: Failed to open file to save public key.");
+    if (!RSA_generate_key_ex(rsa, 2048, e, nullptr)) {
+        BN_free(e);
+        RSA_free(rsa);
+        throw std::runtime_error("Failed to generate RSA keys");
     }
-    PEM_write_RSA_PUBKEY(pubFile, rsa);
-    fclose(pubFile);
 
-    // Save private key
-    FILE* privFile = fopen(privateKeyPath.c_str(), "wb");
-    if (!privFile) {
-        throw std::runtime_error("Error: Failed to open file to save private key.");
-    }
-    PEM_write_RSAPrivateKey(privFile, rsa, nullptr, nullptr, 0, nullptr, nullptr);
-    fclose(privFile);
+    BIO* pub = BIO_new_file(publicKeyPath.c_str(), "w+");
+    BIO* priv = BIO_new_file(privateKeyPath.c_str(), "w+");
 
+    PEM_write_bio_RSAPublicKey(pub, rsa);
+    PEM_write_bio_RSAPrivateKey(priv, rsa, nullptr, nullptr, 0, nullptr, nullptr);
+
+    BIO_free_all(pub);
+    BIO_free_all(priv);
+    BN_free(e);
     RSA_free(rsa);
-    BN_free(bn);
-
-    // Print the message only once
-    std::cout << "RSA keys generated and saved to " << publicKeyPath << " and " << privateKeyPath << "\n";
 }
 
-void RSAKeyManager::loadKeys() {
-    // Load public key
-    FILE* pubFile = fopen(publicKeyPath.c_str(), "rb");
-    if (!pubFile) {
-        throw std::runtime_error("Error: Failed to open public key file.");
-    }
-    publicKey = PEM_read_RSA_PUBKEY(pubFile, nullptr, nullptr, nullptr);
-    fclose(pubFile);
-    if (!publicKey) {
-        throw std::runtime_error("Error: Failed to read public key.");
+void RSAKeyManager::saveKeys(const std::string& pubPath, const std::string& privPath) {
+    publicKeyPath = pubPath;
+    privateKeyPath = privPath;
+    generateKeys();
+}
+
+void RSAKeyManager::loadKeys(const std::string& pubPath, const std::string& privPath) {
+    
+    publicKeyPath = pubPath;
+    privateKeyPath = privPath;
+
+    BIO* pub = BIO_new_file(publicKeyPath.c_str(), "r");
+    BIO* priv = BIO_new_file(privateKeyPath.c_str(), "r");
+
+    if (!pub || !priv) {
+        if (pub) BIO_free(pub);
+        if (priv) BIO_free(priv);
+        throw std::runtime_error("Unable to open RSA key files");
     }
 
-    // Load private key
-    FILE* privFile = fopen(privateKeyPath.c_str(), "rb");
-    if (!privFile) {
-        throw std::runtime_error("Error: Failed to open private key file.");
-    }
-    privateKey = PEM_read_RSAPrivateKey(privFile, nullptr, nullptr, nullptr);
-    fclose(privFile);
-    if (!privateKey) {
-        throw std::runtime_error("Error: Failed to read private key.");
+    publicKey = PEM_read_bio_RSAPublicKey(pub, nullptr, nullptr, nullptr);
+    privateKey = PEM_read_bio_RSAPrivateKey(priv, nullptr, nullptr, nullptr);
+
+    BIO_free(pub);
+    BIO_free(priv);
+
+    if (!publicKey || !privateKey) {
+        throw std::runtime_error("Failed to load RSA keys");
     }
 }
 
-#include <openssl/rsa.h>
 std::vector<unsigned char> RSAKeyManager::encryptAESKey(const std::vector<unsigned char>& aesKey) {
     std::vector<unsigned char> encrypted(RSA_size(publicKey));
-    int len = RSA_public_encrypt(
-        aesKey.size(), aesKey.data(), encrypted.data(), publicKey, RSA_PKCS1_OAEP_PADDING);
-    if (len == -1) {
-        throw std::runtime_error("Error: RSA encryption failed.");
+    int result = RSA_public_encrypt(aesKey.size(), aesKey.data(), encrypted.data(), publicKey, RSA_PKCS1_OAEP_PADDING);
+
+    if (result == -1) {
+        throw std::runtime_error("RSA encryption failed");
     }
-    encrypted.resize(len);
+    encrypted.resize(result);
     return encrypted;
 }
 
 std::vector<unsigned char> RSAKeyManager::decryptAESKey(const std::vector<unsigned char>& encryptedKey) {
     std::vector<unsigned char> decrypted(RSA_size(privateKey));
-    int len = RSA_private_decrypt(
-        encryptedKey.size(), encryptedKey.data(), decrypted.data(), privateKey, RSA_PKCS1_OAEP_PADDING);
-    if (len == -1) {
-        throw std::runtime_error("Error: RSA decryption failed.");
+    int result = RSA_private_decrypt(encryptedKey.size(), encryptedKey.data(), decrypted.data(), privateKey, RSA_PKCS1_OAEP_PADDING);
+
+    if (result == -1) {
+        throw std::runtime_error("RSA decryption failed");
     }
-    decrypted.resize(len);
+    decrypted.resize(result);
     return decrypted;
 }
