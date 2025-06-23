@@ -1,21 +1,28 @@
-#ifndef CLIHANDLER_H
-#define CLIHANDLER_H
+#ifndef CLI_HANDLER_H
+#define CLI_HANDLER_H
 
 #include <string>
 #include <vector>
 
 class CLIHandler {
 private:
-    std::vector<std::string> args; // Command-line arguments
+    std::vector<std::string> args;
 
 public:
-    CLIHandler(int argc, char* argv[]); // Constructor
+    // Constructor
+    CLIHandler(int argc, char* argv[]);
+
+    // Menu display
     void displayHelp();
     int displayMenuAndPrompt();
-    void handleEncryption();
-    void handleDecryption();
+
+    // Handlers for operations
+    void handleEncryption(const std::string& inputFile, const std::string& outputFile);
+    void handleDecryption(const std::string& inputFile, const std::string& outputFile);
     void handleKeyGeneration();
+
+    // Argument parser
     void parseArguments();
 };
 
-#endif // CLIHANDLER_H
+#endif // CLI_HANDLER_H

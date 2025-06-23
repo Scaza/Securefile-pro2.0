@@ -30,6 +30,12 @@
     <ClCompile Include="PasswordManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Benchmarking.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HashingUtility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RSAKeyManager.h">
@@ -42,6 +48,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PasswordManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Benchmarking.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HashUtility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

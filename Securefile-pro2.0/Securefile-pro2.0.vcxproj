@@ -136,15 +136,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="HashingUtility.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PasswordManager.cpp" />
     <ClCompile Include="RSAKeyManager.cpp" />
     <ClCompile Include="FileEncryptor.cpp" />
     <ClCompile Include="CLIHandler.cpp" />
+    <ClCompile Include="Benchmarking.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CLIHandler.h" />
     <ClInclude Include="FileEncryptor.h" />
+    <ClInclude Include="Benchmarking.h" />
+    <ClInclude Include="HashUtility.h" />
     <ClInclude Include="PasswordManager.h" />
     <ClInclude Include="RSAKeyManager.h" />
   </ItemGroup>
