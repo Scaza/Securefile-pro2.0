@@ -39,3 +39,12 @@ std::vector<unsigned char> PasswordManager::deriveKey(const std::string& passwor
 
     return key;
 }
+
+std::string PasswordManager::promptPasswordConfirmation() {
+
+    std::string password;
+    std::cout << "Confirm password selection: ";
+    std::cin >> password;
+    return password;
+
+}
