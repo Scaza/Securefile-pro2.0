@@ -1,37 +1,38 @@
 #include "CLIHandler.h"
 #include <iostream>
-#include <string>
 
 int main(int argc, char* argv[]) {
-    CLIHandler handler(argc, argv);
-    int choice;
-    std::string inputFile, outputFile;
+    CLIHandler cli(argc, argv);
 
-    do {
-        choice = handler.displayMenuAndPrompt();
-        switch (choice) {
-        case 1:
-            std::cout << "Enter input file path: ";
+    while (true) {
+        int choice = cli.displayMenuAndPrompt();
+
+        if (choice == 1) {  // Encrypt a file
+            std::string inputFile, outputFile;
+            std::cout << "Enter the full path of the input file to encrypt: ";
             std::cin >> inputFile;
-            std::cout << "Enter output file path: ";
+            std::cout << "Enter the full path for the output (encrypted) file: ";
             std::cin >> outputFile;
-            handler.handleEncryption(inputFile, outputFile);
-            break;
-        case 2:
-            std::cout << "Enter encrypted file path: ";
+
+            cli.handleEncryption(inputFile, outputFile);
+        }
+        else if (choice == 2) {  // Decrypt a file
+            std::string inputFile, outputFile;
+            std::cout << "Enter the full path of the input file to decrypt: ";
             std::cin >> inputFile;
-            std::cout << "Enter output (decrypted) file path: ";
+            std::cout << "Enter the full path for the output (decrypted) file: ";
             std::cin >> outputFile;
-            handler.handleDecryption(inputFile, outputFile);
-            break;
-        case 3:
+
+            cli.handleDecryption(inputFile, outputFile);
+        }
+        else if (choice == 3) {  // Exit
             std::cout << "Exiting program.\n";
             break;
-        default:
-            std::cout << "Invalid choice. Please try again.\n";
         }
-    } while (choice != 3);
+        else {
+            std::cout << "Invalid option. Please try again.\n";
+        }
+    }
 
     return 0;
 }
-

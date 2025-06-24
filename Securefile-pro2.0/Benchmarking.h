@@ -8,12 +8,12 @@
 
 class Benchmarking {
 private:
-    std::chrono::high_resolution_clock::time_point start;
-    std::chrono::high_resolution_clock::time_point end;
+    std::chrono::high_resolution_clock::time_point startTime;
+    std::chrono::high_resolution_clock::time_point endTime;
 
 public:
-    void startTimer();
-    void stopTimer();
+    void start();
+    double stop();
     double getElapsedTime() const; // in milliseconds
 };
 

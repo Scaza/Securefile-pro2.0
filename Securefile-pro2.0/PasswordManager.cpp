@@ -1,29 +1,41 @@
 #include "PasswordManager.h"
 #include <openssl/evp.h>
 #include <openssl/rand.h>
-#include <stdexcept>
 #include <iostream>
-
-PasswordManager::PasswordManager() : userPassword(""), salt() {}
+#include <vector>
+#include <stdexcept>
 
 std::string PasswordManager::promptPassword() {
-    std::cout << "Enter password: ";
-    std::cin >> userPassword;
-    return userPassword;
+    std::string password;
+    std::cout << "Enter a password: ";
+    std::cin >> password;
+    return password;
 }
 
 std::vector<unsigned char> PasswordManager::generateSalt(size_t length) {
     std::vector<unsigned char> salt(length);
-    if (RAND_bytes(salt.data(), length) != 1) {
-        throw std::runtime_error("Failed to generate random salt.");
+
+    if (RAND_bytes(salt.data(), static_cast<int>(length)) != 1) {
+        throw std::runtime_error("Error generating random salt.");
     }
+
     return salt;
 }
 
-std::vector<unsigned char> PasswordManager::deriveKey(const std::string& password, const std::vector<unsigned char>& salt, int iterations, int keyLength) {
-    std::vector<unsigned char> derivedKey(keyLength);
-    if (PKCS5_PBKDF2_HMAC(password.c_str(), password.size(), salt.data(), salt.size(), iterations, EVP_sha256(), keyLength, derivedKey.data()) != 1) {
-        throw std::runtime_error("Failed to derive key using PBKDF2.");
+std::vector<unsigned char> PasswordManager::deriveKey(const std::string& password, const std::vector<unsigned char>& salt, int keyLength) {
+    
+    std::vector<unsigned char> key(keyLength);
+
+    const EVP_MD* digest = EVP_sha256();
+    int result = PKCS5_PBKDF2_HMAC(
+        password.c_str(), static_cast<int>(password.length()),
+        salt.data(), static_cast<int>(salt.size()),
+        10000, digest, keyLength, key.data()
+    );
+
+    if (result != 1) {
+        throw std::runtime_error("Error deriving key.");
     }
-    return derivedKey;
+
+    return key;
 }

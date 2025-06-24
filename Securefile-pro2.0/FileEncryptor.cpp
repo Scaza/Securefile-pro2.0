@@ -1,140 +1,186 @@
 #include "FileEncryptor.h"
-#include <openssl/evp.h>
+#include "Benchmarking.h"
+#include <openssl/aes.h>
 #include <openssl/rand.h>
-#include <fstream>
 #include <iostream>
+#include <fstream>
+#include <thread>
 #include <vector>
-#include <cstring>
+#include <mutex>
+#include <chrono>
 
-FileEncryptor::FileEncryptor() {
-    // Optionally initialize default paths or clear the key
-    inputFilePath = "";
-    outputFilePath = "";
-    aesKey.clear();
+#define CHUNK_SIZE 1048576  // 1 MB per chunk
+
+FileEncryptor::FileEncryptor(const std::string& inputPath) {
+    this->inputFilePath = inputPath;
 }
 
-void FileEncryptor::setFilePaths(const std::string& input, const std::string& output) {
-    inputFilePath = input;
-    outputFilePath = output;
+FileEncryptor::FileEncryptor(const std::string& inputPath, const std::string& outputPath) {
+
+    this->inputFilePath = inputPath;
+    this->outputFilePath = outputPath;
 }
 
 void FileEncryptor::setKey(const std::vector<unsigned char>& key) {
     aesKey = key;
 }
 
-void FileEncryptor::encryptFile() {
-    std::ifstream inFile(inputFilePath, std::ios::binary);
-    std::ofstream outFile(outputFilePath, std::ios::binary);
-
-    if (!inFile.is_open()) {
-        std::cerr << "Error: Could not open input file: " << inputFilePath << "\n";
-        return;
-    }
-    if (!outFile.is_open()) {
-        std::cerr << "Error: Could not open output file: " << outputFilePath << "\n";
-        return;
-    }
-
-    // Extract and save original extension
-    size_t extPos = inputFilePath.find_last_of(".");
-    std::string originalExt = (extPos != std::string::npos) ? inputFilePath.substr(extPos) : "";
-    size_t extLen = originalExt.size();
-
-    // Write magic header
-    outFile.write("SFENC", 5);
-    outFile.put(static_cast<char>(extLen));
-    outFile.write(originalExt.c_str(), extLen);
-
-    unsigned char iv[EVP_MAX_IV_LENGTH];
-    RAND_bytes(iv, EVP_MAX_IV_LENGTH);
-    outFile.write(reinterpret_cast<char*>(iv), EVP_MAX_IV_LENGTH);
-
-    EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-    EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, aesKey.data(), iv);
-
-    std::vector<unsigned char> buffer(4096);
-    std::vector<unsigned char> cipherBuffer(4096 + EVP_MAX_BLOCK_LENGTH);
-    int outLen;
-
-    while (inFile.read(reinterpret_cast<char*>(buffer.data()), buffer.size()) || inFile.gcount()) {
-        EVP_EncryptUpdate(ctx, cipherBuffer.data(), &outLen, buffer.data(), static_cast<int>(inFile.gcount()));
-        outFile.write(reinterpret_cast<char*>(cipherBuffer.data()), outLen);
-    }
-
-    EVP_EncryptFinal_ex(ctx, cipherBuffer.data(), &outLen);
-    outFile.write(reinterpret_cast<char*>(cipherBuffer.data()), outLen);
-
-    EVP_CIPHER_CTX_free(ctx);
-}
-
-void FileEncryptor::decryptFile() {
-    
-    std::ifstream inFile(inputFilePath, std::ios::binary);
-
-    if (!inFile.is_open()) {
-        std::cerr << "Error: Could not open input file: " << inputFilePath << "\n";
-        return;
-    }
- 
-    // Check magic header
-    char header[5];
-    inFile.read(header, 5);
-    if (std::strncmp(header, "SFENC", 5) != 0) {
-        std::cerr << "Error: File is not encrypted with this program or is corrupted.\n";
-        return;
-    }
-    
-    // Read original extension
-    char extLenChar;
-    inFile.get(extLenChar);
-    size_t extLen = static_cast<unsigned char>(extLenChar);
-    std::string originalExt(extLen, '\0');
-    inFile.read(&originalExt[0], extLen);
-
-    std::string adjustedOutput = outputFilePath;
-    if (adjustedOutput.find_last_of(".") != std::string::npos) {
-        adjustedOutput = adjustedOutput.substr(0, adjustedOutput.find_last_of("."));
-    }
-    adjustedOutput += originalExt;
-
-    std::ofstream outFile(adjustedOutput, std::ios::binary);
-    if (!outFile.is_open()) {
-        std::cerr << "Error: Could not open output file: " << adjustedOutput << "\n";
-        return;
-    }
-
-    unsigned char iv[EVP_MAX_IV_LENGTH];
-    inFile.read(reinterpret_cast<char*>(iv), EVP_MAX_IV_LENGTH);
-
-    EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-    EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, aesKey.data(), iv);
-
-    std::vector<unsigned char> buffer(4096);
-    std::vector<unsigned char> plainBuffer(4096 + EVP_MAX_BLOCK_LENGTH);
-    int outLen;
-
-    while (inFile.read(reinterpret_cast<char*>(buffer.data()), buffer.size()) || inFile.gcount()) {
-        EVP_DecryptUpdate(ctx, plainBuffer.data(), &outLen, buffer.data(), static_cast<int>(inFile.gcount()));
-        outFile.write(reinterpret_cast<char*>(plainBuffer.data()), outLen);
-    }
-
-    if (EVP_DecryptFinal_ex(ctx, plainBuffer.data(), &outLen)) {
-        outFile.write(reinterpret_cast<char*>(plainBuffer.data()), outLen);
-    }
-    else {
-        std::cerr << "Error: Decryption failed.\n";
-    }
-
-    EVP_CIPHER_CTX_free(ctx);
+void FileEncryptor::setFilePaths(const std::string& inputPath, const std::string& outputPath) {
+    inputFilePath = inputPath;
+    outputFilePath = outputPath;
 }
 
 bool FileEncryptor::isEncryptedFile() {
+    
     std::ifstream inFile(inputFilePath, std::ios::binary);
+    
     if (!inFile.is_open()) {
+        std::cerr << "Error: Cannot open file to check encryption status.\n";
         return false;
     }
 
-    char header[5];
-    inFile.read(header, 5);
-    return std::strncmp(header, "SFENC", 5) == 0;
+    char signature[12] = { 0 };
+    inFile.read(signature, 11);
+    inFile.close();
+
+    return std::string(signature) == "ENCRYPTED::";
+}
+
+void FileEncryptor::encryptFile() {
+    if (isEncryptedFile()) {
+        std::cerr << "Error: File is already encrypted.\n";
+        return;
+    }
+
+    std::ifstream inFile(inputFilePath, std::ios::binary);
+    if (!inFile.is_open()) {
+        std::cerr << "Error: Cannot open input file for encryption.\n";
+        return;
+    }
+
+    std::ofstream outFile(outputFilePath, std::ios::binary);
+    if (!outFile.is_open()) {
+        std::cerr << "Error: Cannot open output file for encryption.\n";
+        return;
+    }
+
+    outFile.write("ENCRYPTED::", 11);
+
+    Benchmarking benchmark;
+    benchmark.start();
+
+    std::vector<std::thread> threads;
+    std::mutex fileMutex;
+    size_t chunkIndex = 0;
+
+    while (!inFile.eof()) {
+        std::vector<unsigned char> buffer(CHUNK_SIZE);
+        inFile.read(reinterpret_cast<char*>(buffer.data()), CHUNK_SIZE);
+        std::streamsize bytesRead = inFile.gcount();
+
+        if (bytesRead <= 0) break;
+
+        threads.emplace_back([&, buffer, bytesRead, chunkIndex]() {
+            std::vector<unsigned char> encryptedData = encryptChunk(buffer, bytesRead);
+
+            std::lock_guard<std::mutex> lock(fileMutex);
+            outFile.seekp(11 + chunkIndex * CHUNK_SIZE);
+            outFile.write(reinterpret_cast<const char*>(encryptedData.data()), bytesRead);
+        });
+
+        ++chunkIndex;
+    }
+
+    for (auto& t : threads) {
+        if (t.joinable()) t.join();
+    }
+
+    inFile.close();
+    outFile.close();
+
+    double elapsed = benchmark.stop();
+    std::cout << "Encryption completed in " << elapsed << " seconds.\n";
+}
+
+void FileEncryptor::decryptFile() {
+    if (!isEncryptedFile()) {
+        std::cerr << "Error: File is not encrypted or already decrypted.\n";
+        return;
+    }
+
+    std::ifstream inFile(inputFilePath, std::ios::binary);
+    if (!inFile.is_open()) {
+        std::cerr << "Error: Cannot open input file for decryption.\n";
+        return;
+    }
+
+    std::ofstream outFile(outputFilePath, std::ios::binary);
+    if (!outFile.is_open()) {
+        std::cerr << "Error: Cannot open output file for decryption.\n";
+        return;
+    }
+
+    // Skip the ENCRYPTED signature
+    inFile.seekg(11);
+
+    Benchmarking benchmark;
+    benchmark.start();
+
+    std::vector<std::thread> threads;
+    std::mutex fileMutex;
+    size_t chunkIndex = 0;
+
+    while (!inFile.eof()) {
+        std::vector<unsigned char> buffer(CHUNK_SIZE);
+        inFile.read(reinterpret_cast<char*>(buffer.data()), CHUNK_SIZE);
+        std::streamsize bytesRead = inFile.gcount();
+
+        if (bytesRead <= 0) break;
+
+        threads.emplace_back([&, buffer, bytesRead, chunkIndex]() {
+            std::vector<unsigned char> decryptedData = decryptChunk(buffer, bytesRead);
+
+            std::lock_guard<std::mutex> lock(fileMutex);
+            outFile.seekp(chunkIndex * CHUNK_SIZE);
+            outFile.write(reinterpret_cast<const char*>(decryptedData.data()), bytesRead);
+        });
+
+        ++chunkIndex;
+    }
+
+    for (auto& t : threads) {
+        if (t.joinable()) t.join();
+    }
+
+    inFile.close();
+    outFile.close();
+
+    double elapsed = benchmark.stop();
+    std::cout << "Decryption completed in " << elapsed << " seconds.\n";
+}
+
+std::vector<unsigned char> FileEncryptor::encryptChunk(const std::vector<unsigned char>& data, size_t length) {
+    std::vector<unsigned char> encryptedData(length);
+
+    AES_KEY encryptKey;
+    AES_set_encrypt_key(aesKey.data(), 256, &encryptKey);
+
+    for (size_t i = 0; i < length; i += AES_BLOCK_SIZE) {
+        AES_encrypt(data.data() + i, encryptedData.data() + i, &encryptKey);
+    }
+
+    return encryptedData;
+}
+
+std::vector<unsigned char> FileEncryptor::decryptChunk(const std::vector<unsigned char>& data, size_t length) {
+    std::vector<unsigned char> decryptedData(length);
+
+    AES_KEY decryptKey;
+    AES_set_decrypt_key(aesKey.data(), 256, &decryptKey);
+
+    for (size_t i = 0; i < length; i += AES_BLOCK_SIZE) {
+        AES_decrypt(data.data() + i, decryptedData.data() + i, &decryptKey);
+    }
+
+    return decryptedData;
 }
