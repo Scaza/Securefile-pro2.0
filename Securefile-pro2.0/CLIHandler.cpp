@@ -50,6 +50,12 @@ void CLIHandler::handleEncryption(const std::string& inputFile, const std::strin
 
     PasswordManager passwordManager;
     std::string password = passwordManager.promptPassword();
+    std::string confirmPassword = passwordManager.promptPasswordConfirmation();
+
+    if (password != confirmPassword) {
+        std::cerr << "Error: Passwords do not match. Encryption cancelled.\n";
+        return;
+    }
 
     std::vector<unsigned char> salt;
     try {
@@ -137,7 +143,13 @@ void CLIHandler::handleDecryption(const std::string& inputFile, const std::strin
     PasswordManager passwordManager;
     std::string password = passwordManager.promptPassword();
 
-    std::vector<unsigned char> derivedKey;
+    std::vector<unsigned char> derivedKey = passwordManager.deriveKey(password, salt);
+    std::vector<unsigned char> decryptedKey = rsa.decryptAESKey(encryptedAESKey);
+
+    if (derivedKey != decryptedKey) {
+        std::cerr << "Error: Incorrect password. Decryption cancelled.\n";
+        return;
+    }
     try {
         derivedKey = passwordManager.deriveKey(password, salt);
     }

@@ -7,6 +7,7 @@
 class PasswordManager {
 public:
     std::string promptPassword();
+    std::string promptPasswordConfirmation();
     std::vector<unsigned char> generateSalt(size_t length = 16);
     std::vector<unsigned char> deriveKey(const std::string& password, const std::vector<unsigned char>& salt, int keyLength = 32);
 };
