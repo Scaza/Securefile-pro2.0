@@ -14,8 +14,7 @@ private:
     RSA* privateKey = nullptr;
 
 public:
-    // Constructors
-    RSAKeyManager();
+    //Constructors
     RSAKeyManager(const std::string& pubPath, const std::string& privPath);
 
     // Key Management

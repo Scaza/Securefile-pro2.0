@@ -15,12 +15,12 @@ public:
     // Menu display
     void displayHelp();
     int displayMenuAndPrompt();
+    void displayBanner();
 
     // Handlers for operations
     void handleEncryption(const std::string& inputFile, const std::string& outputFile);
     void handleDecryption(const std::string& inputFile, const std::string& outputFile);
-    void handleKeyGeneration();
-
+   
     // Argument parser
     void parseArguments();
 };

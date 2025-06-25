@@ -9,6 +9,12 @@
 #include <mutex>
 #include <chrono>
 
+#define RESET "\033[0m"
+#define CYAN "\033[36m"
+#define GREEN "\033[32m"
+#define RED "\033[31m"
+#define MAGENTA "\033[35m"
+
 #define CHUNK_SIZE 1048576  // 1 MB per chunk
 
 FileEncryptor::FileEncryptor(const std::string& inputPath) {
@@ -35,7 +41,7 @@ bool FileEncryptor::isEncryptedFile() {
     std::ifstream inFile(inputFilePath, std::ios::binary);
     
     if (!inFile.is_open()) {
-        std::cerr << "Error: Cannot open file to check encryption status.\n";
+        std::cerr << RED << "Error: Cannot open file to check encryption status.\n" << RESET;
         return false;
     }
 
@@ -48,19 +54,19 @@ bool FileEncryptor::isEncryptedFile() {
 
 void FileEncryptor::encryptFile() {
     if (isEncryptedFile()) {
-        std::cerr << "Error: File is already encrypted.\n";
+        std::cerr << RED << "Error: File is already encrypted.\n" << RESET;
         return;
     }
 
     std::ifstream inFile(inputFilePath, std::ios::binary);
     if (!inFile.is_open()) {
-        std::cerr << "Error: Cannot open input file for encryption.\n";
+        std::cerr << RED << "Error: Cannot open input file for encryption.\n" << RESET;
         return;
     }
 
     std::ofstream outFile(outputFilePath, std::ios::binary);
     if (!outFile.is_open()) {
-        std::cerr << "Error: Cannot open output file for encryption.\n";
+        std::cerr << RED << "Error: Cannot open output file for encryption.\n" << RESET;
         return;
     }
 
@@ -99,24 +105,24 @@ void FileEncryptor::encryptFile() {
     outFile.close();
 
     double elapsed = benchmark.stop();
-    std::cout << "Encryption completed in " << elapsed << " seconds.\n";
+    std::cout << GREEN << "Encryption completed in " << elapsed << " seconds.\n" << RESET;
 }
 
 void FileEncryptor::decryptFile() {
     if (!isEncryptedFile()) {
-        std::cerr << "Error: File is not encrypted or already decrypted.\n";
+        std::cerr << RED << "Error: File is not encrypted or already decrypted.\n" << RESET;
         return;
     }
 
     std::ifstream inFile(inputFilePath, std::ios::binary);
     if (!inFile.is_open()) {
-        std::cerr << "Error: Cannot open input file for decryption.\n";
+        std::cerr << RED << "Error: Cannot open input file for decryption.\n" << RESET;
         return;
     }
 
     std::ofstream outFile(outputFilePath, std::ios::binary);
     if (!outFile.is_open()) {
-        std::cerr << "Error: Cannot open output file for decryption.\n";
+        std::cerr << RED << "Error: Cannot open output file for decryption.\n" << RESET;
         return;
     }
 
@@ -156,7 +162,7 @@ void FileEncryptor::decryptFile() {
     outFile.close();
 
     double elapsed = benchmark.stop();
-    std::cout << "Decryption completed in " << elapsed << " seconds.\n";
+    std::cout << GREEN << "Decryption completed in " << elapsed << " seconds.\n" << RESET;
 }
 
 std::vector<unsigned char> FileEncryptor::encryptChunk(const std::vector<unsigned char>& data, size_t length) {

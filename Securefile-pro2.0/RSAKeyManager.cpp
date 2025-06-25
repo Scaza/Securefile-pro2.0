@@ -7,7 +7,6 @@
 #include <vector>
 #include <stdexcept>
 
-RSAKeyManager::RSAKeyManager() {}
 
 RSAKeyManager::RSAKeyManager(const std::string& pubPath, const std::string& privPath)
     : publicKeyPath(pubPath), privateKeyPath(privPath) {}
