@@ -5,14 +5,20 @@
 #include <vector>
 #include <stdexcept>
 
+#define RESET "\033[0m"
+#define CYAN "\033[36m"
+#define RED "\033[31m"
+#define YELLOW "\033[33m"
+
 std::string PasswordManager::promptPassword() {
     std::string password;
-    std::cout << "Enter a password: ";
+    std::cout << YELLOW << "Enter a password: " << RESET;
     std::cin >> password;
     return password;
 }
 
 std::vector<unsigned char> PasswordManager::generateSalt(size_t length) {
+    
     std::vector<unsigned char> salt(length);
 
     if (RAND_bytes(salt.data(), static_cast<int>(length)) != 1) {
@@ -43,7 +49,7 @@ std::vector<unsigned char> PasswordManager::deriveKey(const std::string& passwor
 std::string PasswordManager::promptPasswordConfirmation() {
 
     std::string password;
-    std::cout << "Confirm password selection: ";
+    std::cout << YELLOW << "Confirm password selection: " << RESET;
     std::cin >> password;
     return password;
 
