@@ -16,6 +16,7 @@ private:
     std::mutex writeMutex;
 
 public:
+    FileEncryptor();
     FileEncryptor(const std::string& input);
     FileEncryptor(const std::string& input, const std::string& output);
     void setFilePaths(const std::string& input, const std::string& output);

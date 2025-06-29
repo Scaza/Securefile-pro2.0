@@ -28,10 +28,21 @@ std::vector<unsigned char> PasswordManager::generateSalt(size_t length) {
     return salt;
 }
 
-std::vector<unsigned char> PasswordManager::deriveKey(const std::string& password, const std::vector<unsigned char>& salt, int keyLength) {
-    
-    std::vector<unsigned char> key(keyLength);
+std::vector<unsigned char> PasswordManager::deriveKey(
+    const std::string& password,
+    const std::vector<unsigned char>& salt,
+    int keyLength)
+{
+    // --- Add explicit parameter validation ---
+    if (salt.empty()) {
+        throw std::runtime_error("Error deriving key: salt cannot be empty.");
+    }
+    if (keyLength <= 0) {
+        throw std::runtime_error("Error deriving key: key length must be positive.");
+    }
+    // ------------------------------------------
 
+    std::vector<unsigned char> key(keyLength);
     const EVP_MD* digest = EVP_sha256();
     int result = PKCS5_PBKDF2_HMAC(
         password.c_str(), static_cast<int>(password.length()),
