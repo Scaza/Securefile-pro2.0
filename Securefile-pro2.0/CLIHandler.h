@@ -6,9 +6,9 @@
 
 class CLIHandler {
 private:
-    std::vector<std::string> args;
 
 public:
+    std::vector<std::string> args;
     // Constructor
     CLIHandler(int argc, char* argv[]);
 
